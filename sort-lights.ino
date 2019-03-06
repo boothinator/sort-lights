@@ -12,10 +12,12 @@
 CRGB leds[ARRAY_SIZE];
 #define PIN 7
 
+#define SORT_BRIGHTNESS 0x10
+
 void randomize() {
   for (int i = 0; i < ARRAY_SIZE; i++) {
     uint8_t hue = (random(ARRAY_SIZE)/(double)ARRAY_SIZE)*0xFF;
-    leds[i].setHue(hue);
+    leds[i].setHSV(hue, 255, SORT_BRIGHTNESS);
   }
 }
 
@@ -32,11 +34,11 @@ void setup() {
   FastLED.show();
 }
 
-void blink(int i, int j)
+void blink(int i, int j, int times)
 {
   CRGB color_i = leds[i];
   CRGB color_j = leds[j];
-  for (int k = 0; k < 5; k++) {
+  for (int k = 0; k < times; k++) {
     leds[i] = 0x000000;
     leds[j] = 0x000000;
     FastLED.show();
@@ -55,15 +57,18 @@ void insertionSort()
   
   for (int i = 1; i < ARRAY_SIZE; i++) {
     for (int j = i; j >= 0; j--){
-      if (leds[j - 1] > leds[j]) {
-        blink(j-1, j);
+      blink(j-1, j, 1);
+      
+      if (rgb2hsv_approximate(leds[j - 1]).hue > rgb2hsv_approximate(leds[j]).hue) {
+        //blink(j-1, j, 5);
         CRGB tmp = leds[j - 1];
         leds[j - 1] = leds[j];
         leds[j] = tmp;
         FastLED.show();
-        delay(500);
       }
+      delay(1000);
     }
+    delay(1000);
   }
 }
 
@@ -84,6 +89,7 @@ void singlePixel(CRGB color)
 }
 
 void loop() {
-  //insertionSort();
-  singlePixel(CHSV(random(0xFF), 255, 255));
+  insertionSort();
+  delay(5000);
+  //singlePixel(CHSV(random(0xFF), 255, 255));
 }
