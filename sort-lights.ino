@@ -6,26 +6,16 @@
  * Use RoboRIO input to select?
  * use EEPROM to store settings
  */
-
-#include <Adafruit_NeoPixel.h>
-#include <limits.h>
+#include "FastLED.h"
 
 #define ARRAY_SIZE 10
-
+CRGB leds[ARRAY_SIZE];
 #define PIN 7
-
-// Parameter 1 = number of pixels in strip
-// Parameter 2 = pin number (most are valid)
-// Parameter 3 = pixel type flags, add together as needed:
-//   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
-//   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
-//   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
-//   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(ARRAY_SIZE, PIN, NEO_GRB + NEO_KHZ800);
 
 void randomize() {
   for (int i = 0; i < ARRAY_SIZE; i++) {
-    strip.setPixelColor(i, random(0xFFFFFF));
+    uint8_t hue = (random(ARRAY_SIZE)/(double)ARRAY_SIZE)*0xFF;
+    leds[i].setHue(hue);
   }
 }
 
@@ -38,22 +28,22 @@ void setup() {
   // randomSeed() will then shuffle the random function.
   randomSeed(analogRead(0));
   
-  strip.begin();
-  strip.show();
+  FastLED.addLeds<NEOPIXEL, PIN>(leds, ARRAY_SIZE);
+  FastLED.show();
 }
 
 void blink(int i, int j)
 {
-  uint32_t color_i = strip.getPixelColor(i);
-  uint32_t color_j = strip.getPixelColor(j);
+  CRGB color_i = leds[i];
+  CRGB color_j = leds[j];
   for (int k = 0; k < 5; k++) {
-    strip.setPixelColor(i, 0xFFFFFF);
-    strip.setPixelColor(j, 0xFFFFFF);
-    strip.show();
+    leds[i] = 0x000000;
+    leds[j] = 0x000000;
+    FastLED.show();
     delay(100);
-    strip.setPixelColor(i, color_i);
-    strip.setPixelColor(j, color_j);
-    strip.show();
+    leds[i] = color_i;
+    leds[j] = color_j;
+    FastLED.show();
     delay(100);
   }
 }
@@ -61,39 +51,39 @@ void blink(int i, int j)
 void insertionSort()
 {
   randomize();
-  strip.show();
+  FastLED.show();
   
   for (int i = 1; i < ARRAY_SIZE; i++) {
     for (int j = i; j >= 0; j--){
-      if (strip.getPixelColor(j - 1) > strip.getPixelColor(j)) {
+      if (leds[j - 1] > leds[j]) {
         blink(j-1, j);
-        uint32_t tmp = strip.getPixelColor(j - 1);
-        strip.setPixelColor(j - 1, strip.getPixelColor(j));
-        strip.setPixelColor(j, tmp);
-        strip.show();
+        CRGB tmp = leds[j - 1];
+        leds[j - 1] = leds[j];
+        leds[j] = tmp;
+        FastLED.show();
         delay(500);
       }
     }
   }
 }
 
-void singlePixel(uint32_t color)
+void singlePixel(CRGB color)
 {
   Serial.print(color, HEX);
-  strip.setPixelColor(0, color);
-  strip.show();
+  leds[0] = color;
+  FastLED.show();
   delay(500);
   for (int i = 1; i < ARRAY_SIZE; i++) {
-    strip.setPixelColor(i - 1, 0);
-    strip.setPixelColor(i, color);
-    strip.show();
+    leds[i - 1] = 0;
+    leds[i] = color;
+    FastLED.show();
     delay(500);
   }
-  strip.setPixelColor(ARRAY_SIZE - 1, 0);
-  strip.show();
+  leds[ARRAY_SIZE - 1] = 0;
+  FastLED.show();
 }
 
 void loop() {
   //insertionSort();
-  singlePixel(random(0xFFFFFF));
+  singlePixel(CHSV(random(0xFF), 255, 255));
 }
